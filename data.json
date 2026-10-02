@@ -1,0 +1,13 @@
+{
+  "built": "2026-10-02",
+  "inv": [
+    ["65196243","O-RING 42X34X4MM","O-RING 42X34X4MM","","PC",0,0,"",0,0,"Store","Workshop","Production","A-01","",""],
+    ["65201475","ROPE MADE OF JUTE","ROPE MADE OF JUTE","","ROLL",12,0,"Warehouse A",0,0,"Store","Workshop","Production","A-02","",""],
+    ["BOLT-110","HEX BOLT M8X30","HEX BOLT M8X30","HB-110","PC",24,0,"Rack 2",0,0,"Store","Workshop","Production","A-03","",""],
+    ["GASK-200","GASKET 1/2 INCH","GASKET 1/2 INCH","GSK-200","PC",16,0,"Rack 4",0,0,"Store","Workshop","Production","A-04","",""]
+  ],
+  "vmi": [
+    ["VMI-001","Fastener Kit","A-01","VMI-001","SET",12,0,8],
+    ["VMI-002","Seal Pack","B-02","VMI-002","SET",8,0,5]
+  ]
+}
