@@ -24,7 +24,7 @@ button.d{background:#fff;color:var(--bad);border-color:#e0b0ac}
 button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.search-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.search-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:0 18px 16px}
 input[type="text"],select{padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
 input[type="text"]:focus,select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 2px rgba(184,131,77,.1)}
 main{max-width:1100px;margin:0 auto;background:rgba(255,255,255,.72);border:1px solid var(--line);padding:16px;box-shadow:var(--shadow)}
@@ -52,10 +52,9 @@ label{display:block;color:var(--muted);font-size:.9rem;margin-bottom:8px}
 input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;margin-top:6px;background:#fff;color:var(--ink)}
 #ef{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #ef label{grid-column:1/-1}
-#ef label[style*="grid-column:1/3"]{grid-column:1/-1}
 .err{color:var(--bad);font-size:.82rem;min-height:1.2em;margin-top:6px}
 #more{display:block;width:100%;margin-top:18px;background:var(--brand2);color:#fff;border-color:var(--brand2)}
-@media (max-width:640px){body{padding:12px}#ef{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.brand{font-size:12px}.search-controls{flex-direction:column}input[type="text"]{width:100%}}
+@media (max-width:640px){body{padding:12px}#ef{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.brand{font-size:12px}.search-controls{flex-direction:column}.search-controls > *{width:100%}}
 </style>
 </head>
 <body>
@@ -113,7 +112,7 @@ input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-ra
 <dialog id="ed">
   <form method="dialog">
     <b id="et">Material</b>
-    <div class="f2" id="ef"></div>
+    <div id="ef"></div>
     <div class="err" id="ee"></div>
     <div class="row" style="margin-top:10px">
       <button class="p" id="sv" type="button">Save</button>
@@ -123,45 +122,215 @@ input,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-ra
 </dialog>
 
 <script>
-const HASH="018ec9b448f93bc8a5a3c82c3b784c1d0c46f4d4bfb094fc2bc4684bc96a96e4",KEY="engg_owner_draft",S="engg_owner_session";
-const F=[["Material code",0],["Description",1],["Long description",2],["OEM number",3],["UOM",4],["Qty",5,1],["VMI stock",6,1],["Location",7],["Min",8,1],["Max",9,1],["Department / area",10],["Machine area",11],["End user",12],["Allocation",13]];
-let D=null,inv=[],vmi=[],tab=0,res=[],shown=0,owner=false,edit=-1;
-const $=i=>document.getElementById(i),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
-function draft(){try{const d=localStorage.getItem(KEY);return d?JSON.parse(d):null}catch(e){return null}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(inv))}catch(e){alert("Could not save in this browser. Use Export data.json.")}}
-async function load(){try{D=await(await fetch("data.json?"+Date.now())).json()}catch(e){$("meta").textContent="Could not load data.json";return}
- inv=D.inv;vmi=D.vmi;if(sessionStorage.getItem(S)==="1")setOwner(true);else run()}
-function setOwner(on){owner=on;$("own").hidden=!on;$("adm").textContent=on?"Log out":"Owner login";$("who").textContent=on?"Owner":"";
- if(on){sessionStorage.setItem(S,"1");const d=draft();if(d)inv=d}else{sessionStorage.removeItem(S);inv=D.inv}run()}
-function run(){const q=$("q").value.trim().toLowerCase(),f=$("fld").value,src=tab?vmi:inv;
- const m=r=>{if(!q)return 1;if(tab){const a=[r[3],r[1],r[2],r[0]];return(f==="all"?a.join(" "):f==="0"?r[3]:f==="1"?r[1]:f==="3"?r[0]:f==="7"?r[2]:a.join(" ")).toLowerCase().includes(q)}
-  const t=f==="all"?r[0]+" "+r[1]+" "+r[2]+" "+r[3]+" "+r[7]+" "+r[12]+" "+r[11]+" "+r[10]:String(r[+f]);return t.toLowerCase().includes(q)};
- res=[];src.forEach((r,i)=>{if(m(r))res.push(i)});shown=0;$("list").innerHTML="";page()}
-function card(i){const r=inv[i];const st=r[5]<=0?"out":(r[8]>0&&r[5]<r[8]?"low":"");
- return '<div class="c '+st+'"><div class="code">'+esc(r[0])+'</div><div class="desc">'+esc(r[1])+'</div>'+(r[2]?'<div class="long">'+esc(r[2])+'</div>':'')+
- '<div class="row" style="justify-content:space-between"><span class="qty">'+r[5]+' <small>'+esc(r[4])+'</small></span><span class="meta-inline">'+(r[6]?'VMI '+r[6]:"")+'</span></div><div class="g">'+
- [["Location",r[7]],["Min / Max",r[8]+" / "+r[9]],["Department",r[10]],["Machine area",r[11]],["End user",r[12]],["OEM no.",r[3]],["Open PO",r[14]||""],["PR in process",r[15]||""]].filter(x=>x[1]!==""&&x[1]!="0 / 0").map(x=>'<div><b>'+x[0]+'</b>'+esc(x[1])+'</div>').join("")+'</div>'+
- (owner?'<div class="act"><button data-e="'+i+'">Edit</button><button class="d" data-x="'+i+'">Delete</button></div>':'')+'</div>'}
-function vcard(i){const r=vmi[i];return '<div class="c"><div class="code">'+esc(r[3]||r[0])+'</div><div class="desc">'+esc(r[1])+'</div><div class="row" style="justify-content:space-between"><span class="qty">'+r[5]+' <small>'+esc(r[4])+'</small></span></div><div class="g"><div><b>Part no.</b>'+esc(r[0])+'</div><div><b>Bin</b>'+esc(r[2])+'</div><div><b>Min / Max</b>'+r[6]+" / "+r[7]+'</div></div></div>'}
-function page(){const n=Math.min(res.length,shown+60);let h="";for(let k=shown;k<n;k++)h+=tab?vcard(res[k]):card(res[k]);$("list").insertAdjacentHTML("beforeend",h);shown=n;
- $("more").hidden=shown>=res.length;$("meta").textContent=res.length+" "+(tab?"VMI parts":"materials")+(res.length?"":" — nothing matches. Try another word or field.")+" · data "+D.built}
-function form(i){edit=i;const r=i>=0?inv[i]:F.map(f=>f[2]?0:"");$("et").textContent=i>=0?"Edit material":"Add material";$("ee").textContent="";
- $("ef").innerHTML=F.map(f=>'<label'+(f[1]<2?' style="grid-column:1/3"':'')+'>'+f[0]+'<input data-k="'+f[1]+'" '+(f[2]?'type="number" step="any"':'')+' value="'+esc(r[f[1]])+'"></label>').join("");$("ed").showModal()}
-$("q").oninput=run;$("fld").onchange=run;$("more").onclick=page;
-[0,1].forEach(t=>$("t"+t).onclick=()=>{tab=t;$("t0").className=t?"":"on";$("t1").className=t?"on":"";run()});
-$("adm").onclick=()=>{if(owner)setOwner(false);else{$("pw").value="";$("le").textContent="";$("lg").showModal()}};
-$("lgo").onclick=async()=>{if(await sha($("pw").value)===HASH){$("lg").close();setOwner(true)}else $("le").textContent="Wrong password."};
-$("lf").onsubmit=e=>{if(e.submitter&&e.submitter.id==="lgo")e.preventDefault()};
-$("add").onclick=()=>form(-1);
-$("list").onclick=e=>{const b=e.target.closest("button");if(!b||!owner)return;if(b.dataset.e)form(+b.dataset.e);
- if(b.dataset.x&&confirm("Delete "+inv[+b.dataset.x][0]+"?")){inv.splice(+b.dataset.x,1);save();run()}};
-$("sv").onclick=()=>{const r=edit>=0?inv[edit].slice():F.map(f=>f[2]?0:"");$("ef").querySelectorAll("input").forEach(i=>{const k=+i.dataset.k;r[k]=F.find(f=>f[1]===k)[2]?(+i.value||0):i.value.trim()});
- if(!r[0]||!r[1]){$("ee").textContent="Material code and description are required.";return}
- if(inv.some((x,i)=>x[0]===r[0]&&i!==edit)){$("ee").textContent="This material code already exists.";return}
- while(r.length<16)r.push(0);if(edit>=0)inv[edit]=r;else inv.unshift(r);save();$("ed").close();$("q").value=r[0];$("fld").value="0";run()};
-$("exp").onclick=()=>{const o=Object.assign({},D,{inv,built:new Date().toISOString().slice(0,10)});const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:"application/json"}));a.download="data.json";a.click()};
-$("rst").onclick=()=>{if(confirm("Discard all changes not yet published?")){localStorage.removeItem(KEY);inv=D.inv;run()}};
+const HASH = "018ec9b448f93bc8a5a3c82c3b784c1d0c46f4d4bfb094fc2bc4684bc96a96e4";
+const KEY = "engg_owner_draft";
+const S = "engg_owner_session";
+const F = [
+  ["Material code",0],
+  ["Description",1],
+  ["Long description",2],
+  ["OEM number",3],
+  ["UOM",4],
+  ["Qty",5,1],
+  ["VMI stock",6,1],
+  ["Location",7],
+  ["Min",8,1],
+  ["Max",9,1],
+  ["Department / area",10],
+  ["Machine area",11],
+  ["End user",12],
+  ["Allocation",13]
+];
+const defaultData = {
+  built: new Date().toISOString().slice(0,10),
+  inv: [
+    ["65196243","O-RING 42X34X4MM","O-RING 42X34X4MM","","PC",0,0,"",0,0,"Store","Workshop","Production","A-01","",""],
+    ["65201475","ROPE MADE OF JUTE","ROPE MADE OF JUTE","","ROLL",12,0,"Warehouse A",0,0,"Store","Workshop","Production","A-02","",""],
+    ["BOLT-110","HEX BOLT M8X30","HEX BOLT M8X30","HB-110","PC",24,0,"Rack 2",0,0,"Store","Workshop","Production","A-03","",""]
+  ],
+  vmi: [
+    ["VMI-001","Fastener Kit","A-01","VMI-001","SET",12,0,8],
+    ["VMI-002","Seal Pack","B-02","VMI-002","SET",8,0,5]
+  ]
+};
+let D = defaultData, inv = [], vmi = [], tab = 0, res = [], shown = 0, owner = false, edit = -1;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>\"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function sha(t){
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2,"0")).join("");
+}
+
+function draft(){
+  try {
+    const d = localStorage.getItem(KEY);
+    return d ? JSON.parse(d) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(inv)); }
+  catch (e) { alert("Could not save in this browser. Use Export data.json."); }
+}
+
+async function load(){
+  try {
+    const response = await fetch("data.json?" + Date.now());
+    if (!response.ok) throw new Error("No data file");
+    D = await response.json();
+  } catch {
+    D = defaultData;
+  }
+  inv = Array.isArray(D.inv) ? D.inv : [];
+  vmi = Array.isArray(D.vmi) ? D.vmi : [];
+  if (sessionStorage.getItem(S) === "1") setOwner(true); else run();
+}
+
+function setOwner(on){
+  owner = on;
+  $("own").hidden = !on;
+  $("adm").textContent = on ? "Log out" : "Owner login";
+  $("who").textContent = on ? "Owner" : "";
+  if (on) {
+    sessionStorage.setItem(S, "1");
+    const d = draft();
+    if (d) inv = d;
+  } else {
+    sessionStorage.removeItem(S);
+    inv = Array.isArray(D.inv) ? D.inv.slice() : [];
+  }
+  run();
+}
+
+function run(){
+  const q = $("q").value.trim().toLowerCase();
+  const f = $("fld").value;
+  const src = tab ? vmi : inv;
+
+  const match = r => {
+    if (!q) return true;
+    if (tab) {
+      const a = [r[3], r[1], r[2], r[0]];
+      const haystack = (
+        f === "all" ? a.join(" ") :
+        f === "0" ? r[3] :
+        f === "1" ? r[1] :
+        f === "3" ? r[0] :
+        f === "7" ? r[2] :
+        a.join(" ")
+      ).toLowerCase();
+      return haystack.includes(q);
+    }
+    const text = f === "all" ? [r[0], r[1], r[2], r[3], r[7], r[12], r[11], r[10]].join(" ") : String(r[+f]);
+    return text.toLowerCase().includes(q);
+  };
+
+  res = [];
+  src.forEach((r, i) => { if (match(r)) res.push(i); });
+  shown = 0;
+  $("list").innerHTML = "";
+  page();
+}
+
+function card(i){
+  const r = inv[i];
+  const st = r[5] <= 0 ? "out" : (r[8] > 0 && r[5] < r[8] ? "low" : "");
+  return '<div class="c '+st+'"><div class="code">'+esc(r[0])+'</div><div class="desc">'+esc(r[1])+'</div>'+(r[2]?'<div class="long">'+esc(r[2])+'</div>':'')+
+    '<div class="row" style="justify-content:space-between"><span class="qty">'+r[5]+' <small>'+esc(r[4])+'</small></span><span class="meta-inline">'+(r[6]?'VMI '+r[6]:"")+'</span></div><div class="g">'+
+    [["Location",r[7]],["Min / Max",r[8]+" / "+r[9]],["Department",r[10]],["Machine area",r[11]],["End user",r[12]],["OEM no.",r[3]],["Open PO",r[14]||""],["PR in process",r[15]||""]].filter(x=>x[1]!==""&&x[1]!="0 / 0").map(x=>'<div><b>'+x[0]+'</b>'+esc(x[1])+'</div>').join("")+'</div>'+
+    (owner?'<div class="act"><button data-e="'+i+'">Edit</button><button class="d" data-x="'+i+'">Delete</button></div>':'')+'</div>';
+}
+
+function vcard(i){
+  const r = vmi[i];
+  return '<div class="c"><div class="code">'+esc(r[3] || r[0])+'</div><div class="desc">'+esc(r[1])+'</div><div class="row" style="justify-content:space-between"><span class="qty">'+r[5]+' <small>'+esc(r[4])+'</small></span></div><div class="g"><div><b>Part no.</b>'+esc(r[0])+'</div><div><b>Bin</b>'+esc(r[2])+'</div><div><b>Min / Max</b>'+r[6]+" / "+r[7]+'</div></div></div>';
+}
+
+function page(){
+  const n = Math.min(res.length, shown + 60);
+  let h = "";
+  for (let k = shown; k < n; k++) h += tab ? vcard(res[k]) : card(res[k]);
+  $("list").insertAdjacentHTML("beforeend", h);
+  shown = n;
+  $("more").hidden = shown >= res.length;
+  $("meta").textContent = res.length + " " + (tab ? "VMI parts" : "materials") + (res.length ? "" : " — nothing matches. Try another word or field.") + " · data " + (D && D.built ? D.built : new Date().toISOString().slice(0,10));
+}
+
+function form(i){
+  edit = i;
+  const r = i >= 0 ? inv[i] : F.map(f => f[2] ? 0 : "");
+  $("et").textContent = i >= 0 ? "Edit material" : "Add material";
+  $("ee").textContent = "";
+  $("ef").innerHTML = F.map(f => '<label>'+f[0]+'<input data-k="'+f[1]+'" '+(f[2] ? 'type="number" step="any"' : '')+' value="'+esc(r[f[1]])+'"></label>').join("");
+  $("ed").showModal();
+}
+
+$("q").oninput = run;
+$("fld").onchange = run;
+$("more").onclick = page;
+[0,1].forEach(t => $("t" + t).onclick = () => { tab = t; $("t0").className = t ? "" : "on"; $("t1").className = t ? "on" : ""; run(); });
+$("adm").onclick = () => { if (owner) setOwner(false); else { $("pw").value = ""; $("le").textContent = ""; $("lg").showModal(); } };
+$("lgo").onclick = async () => {
+  if (await sha($("pw").value) === HASH) {
+    $("lg").close();
+    setOwner(true);
+  } else {
+    $("le").textContent = "Wrong password.";
+  }
+};
+$("lf").onsubmit = e => { if (e.submitter && e.submitter.id === "lgo") e.preventDefault(); };
+$("add").onclick = () => form(-1);
+$("list").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b || !owner) return;
+  if (b.dataset.e) form(+b.dataset.e);
+  if (b.dataset.x && confirm("Delete " + inv[+b.dataset.x][0] + "?")) {
+    inv.splice(+b.dataset.x, 1);
+    save();
+    run();
+  }
+};
+$("sv").onclick = () => {
+  const r = edit >= 0 ? inv[edit].slice() : F.map(f => f[2] ? 0 : "");
+  $("ef").querySelectorAll("input").forEach(i => {
+    const k = +i.dataset.k;
+    const field = F.find(f => f[1] === k);
+    r[k] = field && field[2] ? (+i.value || 0) : i.value.trim();
+  });
+  if (!r[0] || !r[1]) {
+    $("ee").textContent = "Material code and description are required.";
+    return;
+  }
+  if (inv.some((x, i) => x[0] === r[0] && i !== edit)) {
+    $("ee").textContent = "This material code already exists.";
+    return;
+  }
+  while (r.length < 16) r.push(0);
+  if (edit >= 0) inv[edit] = r; else inv.unshift(r);
+  save();
+  $("ed").close();
+  $("q").value = r[0];
+  $("fld").value = "0";
+  run();
+};
+$("exp").onclick = () => {
+  const o = Object.assign({}, D, { inv, built: new Date().toISOString().slice(0,10) });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(o, null, 2)], { type: "application/json" }));
+  a.download = "data.json";
+  a.click();
+};
+$("rst").onclick = () => {
+  if (confirm("Discard all changes not yet published?")) {
+    localStorage.removeItem(KEY);
+    inv = Array.isArray(D.inv) ? D.inv.slice() : [];
+    run();
+  }
+};
+
 load();
 </script>
 </body>
