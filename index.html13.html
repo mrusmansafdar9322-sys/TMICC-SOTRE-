@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ENGG STORE</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f1f4f8;color:#1b2430}
+header{background:#0b3d6b;color:#fff;padding:10px 12px;position:sticky;top:0;z-index:5}
+h1{font-size:18px;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+button{font:inherit;border:0;border-radius:8px;padding:7px 12px;background:#e8eef5;color:#0b3d6b;cursor:pointer}
+button.p{background:#1e88e5;color:#fff}button.d{background:#c62828;color:#fff}
+.row{display:flex;gap:6px;margin-top:6px}
+input,select,textarea{font:inherit;padding:9px;border:1px solid #c5ced8;border-radius:8px;width:100%}
+#q{font-size:16px}#info{font-size:12px;margin-top:6px;opacity:.9}
+main{padding:10px;max-width:900px;margin:auto}
+.c{background:#fff;border-radius:10px;padding:10px;margin-bottom:8px;box-shadow:0 1px 2px #0002}
+.t{display:flex;justify-content:space-between;gap:8px}.m{font-weight:700;color:#0b3d6b}
+.q{font-weight:700;white-space:nowrap}.z{color:#c62828}.g{color:#2e7d32}
+.s{font-size:13px;color:#445}.x{display:none;margin-top:8px;border-top:1px solid #e3e8ee;padding-top:6px;font-size:13px}
+.c.o .x{display:block}.x div{display:flex;gap:6px;padding:2px 0}.x b{min-width:110px;color:#667}
+#modal{display:none;position:fixed;inset:0;background:#0007;z-index:9;overflow:auto;padding:12px}
+#box{background:#fff;border-radius:12px;padding:14px;max-width:520px;margin:auto}
+label{display:block;font-size:12px;color:#556;margin:8px 0 2px}
+</style></head><body>
+<header>
+<h1><span>ENGG STORE</span><span><button id="add" hidden class="p">+ Add</button> <button id="exp" hidden>Export</button> <button id="lg">Owner Login</button></span></h1>
+<input id="q" placeholder="Search code, part no., description, location...">
+<div class="row"><select id="f"></select><select id="st"><option value="">All stock</option><option value="in">In stock</option><option value="out">Zero stock</option></select></div>
+<div id="info">Loading...</div>
+</header>
+<main><div id="list"></div><button id="more" class="p" style="width:100%;display:none">Show more</button></main>
+<div id="modal"><div id="box"></div></div>
+<script>
+// Owner password hash (SHA-256). Default password: engg@store  -> change by replacing this hash.
+const HASH="4102546aa4ba565f8378130c68a7a2f35d276429612fb5543b9cae777dca219a";
+const L=["OEM Part #","Material Code","Description","Long Description","UOM","Supplier / OEM","Stock Qty","VMI Stock","Stock Value","Unit Price","Location","Min","Max","End User","Department","Machine Area","Remarks"];
+const NUM=[6,7,8,9,11,12];
+const $=id=>document.getElementById(id);
+let D=[],V=[],shown=0,own=sessionStorage.getItem("own")==="1";
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+let ed=ls("ed",{}),ad=ls("ad",[]);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const key=r=>(r[0]+" "+r[1]+" "+r[2]+" "+r[3]+" "+r[5]+" "+r[10]+" "+r[13]+" "+r[14]+" "+r[15]+" "+r[16]).toLowerCase();
+function prep(r){r._k=key(r);return r}
+fetch("data.json").then(r=>r.json()).then(j=>{
+  D=j.map(r=>ed[r[1]]?prep(ed[r[1]].slice()):prep(r));
+  ad.forEach(r=>{r=prep(r.slice());r._a=1;D.push(r)});
+  ui();run()}).catch(()=>$("info").textContent="Could not load data.json (open via the website link, not as a file).");
+const fs=[["","All fields"],["1","Material Code"],["0","OEM Part #"],["2","Description"],["10","Location"],["13","End User"]];
+$("f").innerHTML=fs.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("");
+function run(){
+  const t=$("q").value.toLowerCase().split(/\s+/).filter(Boolean),f=$("f").value,s=$("st").value;
+  V=D.filter(r=>{
+    if(s==="in"&&!(r[6]>0))return false;if(s==="out"&&r[6]>0)return false;
+    const h=f===""?r._k:String(r[f]).toLowerCase();
+    return t.every(w=>h.includes(w))});
+  shown=0;$("list").innerHTML="";more();
+  $("info").textContent=V.length+" of "+D.length+" items"}
+function more(){
+  const e=V.slice(shown,shown+50);shown+=e.length;
+  $("list").insertAdjacentHTML("beforeend",e.map(card).join(""));
+  $("more").style.display=shown<V.length?"block":"none"}
+function card(r){
+  const i=D.indexOf(r);
+  const det=L.map((l,k)=>k>3||k==3?`<div><b>${l}</b><span>${esc(r[k])}</span></div>`:"").join("");
+  return `<div class="c" onclick="this.classList.toggle('o')">
+  <div class="t"><span class="m">${esc(r[1])}</span><span class="q ${r[6]>0?"g":"z"}">${r[6]} ${esc(r[4])}</span></div>
+  <div>${esc(r[2])}</div>
+  <div class="s">Part: ${esc(r[0]||"-")} &nbsp;|&nbsp; Loc: <b>${esc(r[10]||"-")}</b> &nbsp;|&nbsp; Rs ${r[9]}</div>
+  <div class="x">${det}${own?`<button class="p" style="margin-top:6px" onclick="event.stopPropagation();edit(${i})">Edit</button>`:""}</div></div>`}
+function ui(){["add","exp"].forEach(i=>$(i).hidden=!own);$("lg").textContent=own?"Logout":"Owner Login"}
+$("q").oninput=$("f").onchange=$("st").onchange=run;$("more").onclick=more;
+$("lg").onclick=async()=>{
+  if(own){own=false;sessionStorage.removeItem("own");ui();run();return}
+  const p=prompt("Owner password");if(!p)return;
+  const h=[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(p)))].map(b=>b.toString(16).padStart(2,"0")).join("");
+  if(h===HASH){own=true;sessionStorage.setItem("own","1");ui();run()}else alert("Wrong password")};
+function form(r,title,i){
+  $("box").innerHTML=`<h3>${title}</h3>`+L.map((l,k)=>`<label>${l}</label>${k==3||k==16?`<textarea id="e${k}" rows="2">${esc(r[k])}</textarea>`:`<input id="e${k}" ${NUM.includes(k)?'type="number" step="any"':""} value="${esc(r[k])}">`}`).join("")+
+  `<div class="row" style="margin-top:12px"><button class="p" onclick="save(${i})">Save</button><button onclick="$('modal').style.display='none'">Cancel</button></div>`;
+  $("modal").style.display="block"}
+window.edit=i=>form(D[i],"Edit material",i);
+$("add").onclick=()=>form(L.map((l,k)=>NUM.includes(k)?0:""),"Add new material",-1);
+window.save=i=>{
+  const r=L.map((l,k)=>{let v=$("e"+k).value.trim();return NUM.includes(k)?(parseFloat(v)||0):v});
+  if(!r[1]||!r[2]){alert("Material code and description are required");return}
+  prep(r);
+  if(i<0){if(D.some(x=>x[1]===r[1])){alert("This material code already exists");return}
+    r._a=1;D.push(r);ad.push(r.slice(0,17))}
+  else{r._a=D[i]._a;D[i]=r;
+    if(r._a){const j=ad.findIndex(x=>x[1]===r[1]);if(j>=0)ad[j]=r.slice(0,17)}else ed[r[1]]=r.slice(0,17)}
+  localStorage.setItem("ed",JSON.stringify(ed));localStorage.setItem("ad",JSON.stringify(ad));
+  $("modal").style.display="none";run()};
+$("exp").onclick=()=>{
+  const b=new Blob([JSON.stringify(D.map(r=>r.slice(0,17)))],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="data.json";a.click()};
+ui();
+</script></body></html>
